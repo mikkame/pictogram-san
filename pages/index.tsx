@@ -34,19 +34,15 @@ export default function App() {
         canvas.current.height = videoHeight;
         console.log(`videoWidth: ${videoWidth}, videoHeight: ${videoHeight}`);
 
-        // const predictions = await detector.estimatePoses(
-        //   video,
-        //   {maxPoses: 1, flipHorizontal: false}
-        // );
-        const predictions = await detector.estimateSinglePose(video, {
+        const prediction = await detector.estimateSinglePose(video, {
           flipHorizontal: false,
         });
-        console.log(predictions);
+        console.log(prediction);
 
         const ctx = canvas.current.getContext("2d") as CanvasRenderingContext2D;
         requestAnimationFrame(() => {
           const rendering = new Rendering(ctx);
-          rendering.drawKeypoints(predictions.keypoints);
+          rendering.drawResult(prediction);
         });
         detect(detector);
       } else {
