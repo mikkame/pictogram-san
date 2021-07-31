@@ -1,15 +1,13 @@
 // ref: https://github.com/tensorflow/tfjs-models/blob/master/pose-detection/demos/live_video/src/camera.js
 
 import * as posedetection from "@tensorflow-models/pose-detection";
-import {
-  SupportedModels,
-  Keypoint,
-  Pose,
-} from "@tensorflow-models/pose-detection";
+import { SupportedModels } from "@tensorflow-models/pose-detection";
+
+import { Keypoint, Pose } from "@tensorflow-models/posenet";
 
 export const POSENET_CONFIG = {
   maxPoses: 1,
-  scoreThreshold: 0.5,
+  scoreThreshold: 0.1,
 };
 
 export const DEFAULT_LINE_WIDTH = 2;
@@ -20,8 +18,8 @@ export class Rendering {
   modelName: SupportedModels;
   modelConfig: any;
 
-  constructor(model: SupportedModels, context: CanvasRenderingContext2D) {
-    this.modelName = model;
+  constructor(context: CanvasRenderingContext2D) {
+    this.modelName = SupportedModels.PoseNet;
     this.ctx = context;
     this.modelConfig = { ...POSENET_CONFIG };
   }
@@ -70,7 +68,13 @@ export class Rendering {
 
     if (score >= scoreThreshold) {
       const circle = new Path2D();
-      circle.arc(keypoint.x, keypoint.y, DEFAULT_RADIUS, 0, 2 * Math.PI);
+      circle.arc(
+        keypoint.position.x,
+        keypoint.position.y,
+        DEFAULT_RADIUS,
+        0,
+        2 * Math.PI
+      );
       this.ctx.fill(circle);
       this.ctx.stroke(circle);
     }
@@ -96,8 +100,8 @@ export class Rendering {
 
       if (score1 >= scoreThreshold && score2 >= scoreThreshold) {
         this.ctx.beginPath();
-        this.ctx.moveTo(kp1.x, kp1.y);
-        this.ctx.lineTo(kp2.x, kp2.y);
+        this.ctx.moveTo(kp1.position.x, kp1.position.y);
+        this.ctx.lineTo(kp2.position.x, kp2.position.y);
         this.ctx.stroke();
       }
     });
