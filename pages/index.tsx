@@ -3,34 +3,26 @@ import "@tensorflow/tfjs-core";
 import "@tensorflow/tfjs-converter";
 import "@tensorflow/tfjs-backend-webgl";
 import Webcam from "react-webcam";
-import { createDetector, PoseDetector, SupportedModels, InputResolution } from "@tensorflow-models/pose-detection";
 import { Rendering } from "./models/rendering";
-// import {getValidInputResolutionDimensions, getValidOutputResolutionDimensions} from "./utils";
+import * as posenet from "@tensorflow-models/posenet";
+import {PoseNet, ModelConfig} from "@tensorflow-models/posenet";
 
 export default function App() {
   const webcam = useRef<Webcam>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
-  const modelName = SupportedModels.PoseNet;
 
   const videoConstraints = {
-    width: 640,
-    height: 480,
+    width: 360,
+    height: 270,
     facingMode: "user"
   };
   
   const runPoseDetect = async () => {
-    const resolution: InputResolution = { width: 500, height: 500 };
-    const detector = await createDetector(modelName, {
-      quantBytes: 4,
-      architecture: 'MobileNetV1',
-      outputStride: 16,
-      inputResolution: resolution,
-      multiplier: 0.75
-    });
-    detect(detector);
+    const posenet_model: PoseNet = await posenet.load();
+    detect(posenet_model);
   };
 
-  const detect = async (detector: PoseDetector) => {
+  const detect = async (detector: PoseNet) => {
     if (webcam.current && canvas.current) {
       const webcamCurrent = webcam.current as any;
       // go next step only when the video is completely uploaded.
@@ -42,18 +34,19 @@ export default function App() {
         canvas.current.height = videoHeight;
         console.log(`videoWidth: ${videoWidth}, videoHeight: ${videoHeight}`);
 
-        const predictions = await detector.estimatePoses(
-          video,
-          {maxPoses: 1, flipHorizontal: false}
-        );
-        if (predictions.length) {
-          console.log(predictions);
-        }
-        
+        // const predictions = await detector.estimatePoses(
+        //   video,
+        //   {maxPoses: 1, flipHorizontal: false}
+        // );
+        const predictions = await detector.estimateSinglePose(video, {
+          flipHorizontal: false,
+        });
+        console.log(predictions);
+
         const ctx = canvas.current.getContext("2d") as CanvasRenderingContext2D;
-        const rendering = new Rendering(modelName, ctx);
         requestAnimationFrame(() => {
-          rendering.drawResult(predictions[0]);
+          const rendering = new Rendering(ctx);
+          rendering.drawKeypoints(predictions.keypoints);
         });
         detect(detector);
       } else {
@@ -97,7 +90,7 @@ export default function App() {
           top: 100,
           left: 0,
           right: 0,
-          zIndex: 9,
+          zIndex: 10,
         }}
       />
     </div>
